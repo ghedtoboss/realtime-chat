@@ -9,26 +9,89 @@
 
 <body>
     <h1>WebSocket Chat</h1>
-    <input id="messageInput" type="text" autocomplete="off" />
-    <button onclick="sendMessage()">Send</button>
-    <ul id="messages"></ul>
+
+    <div id="auth">
+        <h2>Register</h2>
+        <input id="registerUsername" type="text" placeholder="Username" />
+        <input id="registerPassword" type="password" placeholder="Password" />
+        <button onclick="register()">Register</button>
+
+        <h2>Login</h2>
+        <input id="loginUsername" type="text" placeholder="Username" />
+        <input id="loginPassword" type="password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div id="chat" style="display:none;">
+        <input id="messageInput" type="text" autocomplete="off" />
+        <button onclick="sendMessage()">Send</button>
+        <ul id="messages"></ul>
+    </div>
 
     <script>
-        var ws = new WebSocket("ws://localhost:8080/ws");
+        function register() {
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
 
-        ws.onmessage = function (event) {
-            var messages = document.getElementById('messages');
-            var message = document.createElement('li');
-            var content = document.createTextNode(event.data);
-            message.appendChild(content);
-            messages.appendChild(message);
-        };
+            fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            }).then(response => {
+                if (response.ok) {
+                    alert('Registration successful!');
+                } else {
+                    alert('Registration failed.');
+                }
+            });
+        }
+
+        function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            }).then(response => {
+                if (response.ok) {
+                    alert('Login successful!');
+                    document.getElementById('auth').style.display = 'none';
+                    document.getElementById('chat').style.display = 'block';
+                } else {
+                    alert('Login failed.');
+                }
+            });
+        }
+
+        var ws;
+
+        function connectWebSocket() {
+            ws = new WebSocket("ws://localhost:8080/ws");
+
+            ws.onmessage = function (event) {
+                var messages = document.getElementById('messages');
+                var message = document.createElement('li');
+                var content = document.createTextNode(event.data);
+                message.appendChild(content);
+                messages.appendChild(message);
+            };
+        }
 
         function sendMessage() {
             var input = document.getElementById("messageInput");
             ws.send(input.value);
             input.value = '';
         }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            connectWebSocket();
+        });
     </script>
 </body>
 
